@@ -1,0 +1,80 @@
+---
+title: "Andrew McLain"
+author: "Andrew McLain, Duncan Hook, Aryan Khorram"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(readr)
+library(albersusa)
+
+us_states <- usa_sf("laea")
+
+elections <- read_csv("C:/RLibrary/November 9 Election Maps/elections.csv")
+
+election_county <- read_csv("C:/RLibrary/November 9 Election Maps/election_county.csv")
+
+my_map_theme <- function(){
+theme(panel.background=element_blank(),
+axis.text=element_blank(),
+axis.ticks=element_blank(),
+axis.title=element_blank())
+}
+
+```
+
+### Exercise 1
+
+
+```{r exercise1}
+elections_long <- elections %>% 
+                              rename('2012' =
+                                       d_points_2012,
+                                     '2016' = d_points) %>%
+                                   pivot_longer(c('2012',
+                                                  '2016'),
+                                            names_to="Year",                                  values_to="dpoints")
+
+us_states_elections <- left_join(us_states, 
+                                 elections_long,
+                                 c("name"="state")) 
+
+my_cutpoints <- c(-100,-15,-5,-1,0,1,5,15,100)
+my_labels <- c("R+15 or more", "R+5 to R+15", "R+1 to R+5", "R+0 to R+1",
+"D+0 to D+1", "D+1 to D+5", "D+5 to D+15", "D+15 or more")
+
+us_states_elections <- us_states_elections %>%
+  mutate(margin = cut(dpoints, breaks = my_cutpoints, labels = my_labels))
+
+my_colors <- c("#b2182b","#d6604d","#f4a582","#fddbc7",
+"#d1e5f0","#92c5de","#4393c3","#2166ac")
+
+ggplot(us_states_elections) +
+facet_wrap(~Year, nrow=2) +
+geom_sf(aes(fill=margin, geometry = geometry)) +
+my_map_theme() +
+scale_fill_manual("", values = my_colors) 
+
+
+my_cutpoints <- c(-100,-15,-5,-1,0,1,5,15,100)
+my_labels <- c("R+15 or more", "R+5 to R+15", "R+1 to R+5", "R+0 to R+1",
+"D+0 to D+1", "D+1 to D+5", "D+5 to D+15", "D+15 or more")
+```
+
+### Exercise 2
+
+
+```{r exercise2a}
+
+```
+
+```{r exercise2b}
+```
+
+```{r exercise2c}
+```
+
+

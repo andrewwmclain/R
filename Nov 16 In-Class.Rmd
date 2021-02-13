@@ -1,0 +1,51 @@
+---
+title: "Nov 16 In-Class"
+author: "Andrew McLain"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(albersusa)
+library(shiny)
+library(plotly)
+#install.packages(plotly)
+#install.packages(shiny)
+
+uscovid <- read_csv("C:/RLibrary/Nov 16 In class/all-states-history.csv", 
+    col_types = cols(date = col_date(format = "%Y-%m-%d")))
+View(uscovid)
+
+all_data <- usa_sf("laea") %>%
+  select(iso_3166_2) %>%
+  left_join(uscovid, by = 
+                      c("iso_3166_2"="state"))
+
+map <- ggplot(mapcovid) +
+  geom_sf(aes(fill=death))
+ggplotly(map)
+
+covidmap <- function(mydate){
+  map <- all_data %>%
+    filter(date == as.Date(mydate)) %>%
+    ggplot() + geom_sf(aes(fill=death))
+  ggplotly(map)
+}
+
+covidmap("2020-04-21")
+```
+
+### Exercise 1
+
+Insert any text here.
+
+```{r code-chunk-label}
+# Insert code for Exercise 1 here
+```
+
+### Exercise 2
+
+...
+

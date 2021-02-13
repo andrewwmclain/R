@@ -1,0 +1,189 @@
+---
+title: "Week 8 HW"
+author: "Andrew McLain"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+Summary: Give a 2-3 sentence summary of what you consider to be the most important points in the reading.
+
+In chapter 10, O’Neil mainly discusses how WMDs have been used in morally questionable ways to influence elections and public opinion. However, fixing this is very difficult because of how complex and opaque the whole process is. At the end of the chapter, O’Neil also opens the discussion for how we can use the same technology used to control public opinion for the benefit of humankind instead. 
+
+In the conclusion, O’Neil briefly summarizes what the book talked about. She follows by explaining how WMDs help wealthy companies rake in more profits, but further disenfranchise the poor and middle class. As these models continue to evolve, we must take on the difficult task of finding a way to regulate them before they generate even more widespread injustice.  
+
+Question: If you could ask the author one question related to the reading, what would you ask her?
+
+Could you recommend any good resources for learning more about WMDs? For example, you seem to know a lot about the different strategies employed in political campaigns leveraging microtargeting, are there any interesting books about that topic that you would recommend? 
+
+In what ways do you believe Trump’s campaign has been aided or hindered by big data and the internet? 
+
+Reflection: Write a brief reflection/response to the reading.
+
+It is quite interesting to think about how tech companies have not only the power to influence elections, but also a clear incentive to do so. How is the government supposed to know if a company is interfering with elections or governmental processes when the algorithms are so complex and secretive? How is the government supposed to regulate such a complicated relationship when the government itself is influenced by that very relationship?  
+
+The experiments Facebook conducted on its users relating to voting patterns and moods has huge implications. I do not have any social media accounts, but I often wonder how my usage of websites such as YouTube and even LinkedIn may be subconsciously affecting my mental and emotional state. 
+I just wanted to remark that I find it hilarious how Mitt Romney was exposed for his dishonesty with the American public thanks to that bartender with a smart phone. There is little more damning than a candidate revealing their contempt for the very people whose vote they are trying to win. 
+
+I actually think microtargeting by political candidates is an exciting idea. I believe it is up to the citizens to be able to discern whether what they are seeing is true or not. Why not leverage technology to its fullest capacity to win an election? The fact that some voters are worth less than others in these microtargeting algorithms is a testament to how unfair the electoral college system is. Doing away with that system is long overdue. 
+
+The misinformation campaign against Obama was shocking and appalling. It is such an injustice that nobody was held accountable for spreading those lies. Those types of microtargeting campaigns are now very effective thanks to social media. People of certain beliefs are able to live in an echo chamber, to an extent that wasn’t previously possible. 
+
+
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(openintro)
+library(albersusa)
+library(readxl)
+
+burden <- read_excel(
+"C:/RLibrary/Week_8_HW/Apartment List Data -- Cost Burden 2019.xlsx", skip = 1)
+
+burden <- select(burden, -12)
+
+namelist <- c("N_Rent_Households", "Overall_Burden_Rate",
+              "Moderate_Burden_Rate", 
+              "Severe_Burden_Rate",
+              "N_Burden_Overall", 
+              "N_Burden_Moderate",
+              "N_Burden_Severe",
+              "Median_Rent",
+              "Median_Renter_Income")
+
+names(burden) <- c("Location", "Type",
+                   paste(namelist, "18", sep="_"),
+                   paste(namelist, "17", sep="_"),
+                   paste(namelist, "08", sep="_"),
+                   paste(namelist, "change_17_18", sep="_"),
+                   paste(namelist, "change_08_18", sep="_"))
+
+write_csv(burden,
+          "C:/RLibrary/Week_8_HW/RentCostBurden.csv")
+
+burden <- read_csv("RentCostBurden.csv")
+
+my_map_theme <- function(){
+  theme(panel.background=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank())
+  }
+
+us_county <- counties_sf("laea")
+  ggplot(us_county) +
+  geom_sf(size=0.25) +
+  my_map_theme()
+
+
+burden_county <- burden %>%
+  filter(Type=="County") %>%
+  select(Location, Overall_Burden_Rate_18) %>%
+  separate(Location, c("county", "state"), sep=", ")
+
+us_county_burden <-
+  left_join(us_county,
+            burden_county,
+            by=c("name"="county","iso_3166_2"="state"))
+
+ggplot(us_county_burden) +
+  geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+  scale_fill_continuous(low="yellow", high="red") +
+  my_map_theme()
+```
+
+### Exercise 1
+
+
+```{r exercise-1, message=FALSE, warning=FALSE}
+us_county_burden_WA <- us_county_burden %>%
+  filter(state=="Washington")
+
+ggplot(us_county_burden_WA) +
+  geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+  scale_fill_continuous(low="yellow", high="red") +
+  my_map_theme()
+```
+
+### Exercise 2
+
+
+```{r exercise-2, message=FALSE, warning=FALSE}
+us_county2 <- counties_sf()
+
+us_county_burden2 <- left_join(us_county2, burden_county,
+                by=c("name"="county","iso_3166_2"="state"))
+
+us_county_burden_WA2 <- us_county_burden2 %>%
+  filter(state=="Washington")
+
+ggplot(us_county_burden_WA2) +
+  geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+  scale_fill_continuous(low="yellow", high="red") +
+  my_map_theme()
+```
+
+### Exercise 3
+
+There is some overlap, but also some exceptions. This is probably because some areas (like Seattle) have higher incomes to offset the higher rent, so the cost burden is actually lower. 
+```{r exercise-3, message=FALSE, warning=FALSE}
+median_rent_county <- burden %>%
+filter(Type=="County") %>%
+select(Location, Median_Rent_18) %>%
+separate(Location, c("county", "state"), sep=", ")
+
+us_median_rent_county <- left_join(us_county2,
+                                   median_rent_county,
+by=c("name"="county","iso_3166_2"="state"))
+
+us_median_rent_county_WA <- us_median_rent_county %>%
+                       filter(state=="Washington")
+
+ggplot(us_median_rent_county_WA) +
+  geom_sf(aes(fill=Median_Rent_18), size=0.25) +
+  scale_fill_continuous(low="yellow", high="red") +
+  my_map_theme()
+```
+
+### Exercise 4
+
+
+```{r exercise-4, message=FALSE, warning=FALSE}
+NW_county_burden <- us_county_burden2 %>%
+                       filter(state=="Washington" |
+                              state=="Oregon" |
+                              state=="Idaho")
+
+ggplot(NW_county_burden) +
+  geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+  scale_fill_continuous(low="yellow", high="red") +
+  my_map_theme()
+
+NW_states <- usa_sf() %>% filter(name%in%c("Washington", "Oregon", "Idaho"))
+
+ggplot(NW_county_burden) +
+geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+geom_sf(data = NW_states, alpha=0, size=0.5, color="black") +
+scale_fill_continuous(low="yellow", high="red") +
+my_map_theme()
+
+```
+
+### Exercise 5
+
+
+```{r exercise-5, message=FALSE, warning=FALSE}
+ggplot(us_county_burden) +
+geom_sf(aes(fill=Overall_Burden_Rate_18), size=0.25) +
+geom_sf(data = usa_sf(), alpha=0, size=0.5, color="black") +
+scale_fill_continuous(low="yellow", high="red") +
+my_map_theme()
+```
+
+### Exercise 6
+
+The counties that are not properly matched are mostly in Louisiana, but I can't quite determine why that is the case. 
+```{r exercise-6, message=FALSE, warning=FALSE}
+anti_join(burden_county, us_county,
+by=c("county"="name","state"="iso_3166_2"))
+```
+

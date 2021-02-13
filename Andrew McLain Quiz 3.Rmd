@@ -1,0 +1,195 @@
+---
+title: "Quiz 3"
+author: "Andrew McLain"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(openintro)
+library(readxl)
+library(plotly)
+library("rnaturalearth")
+library("rnaturalearthdata")
+
+my_map_theme <- function(){
+  theme(panel.background=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank())
+}
+```
+
+### Question 1
+
+```{r question-1, message=FALSE, warning=FALSE}
+WHOLifeExpectancy <- read_excel("C:/RLibrary/Quiz 3 Andrew McLain/Andrew McLain Quiz 3/WHOLifeExpectancy.xlsx", 
+    col_types = c("text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric"), skip = 2)
+
+names(WHOLifeExpectancy) <- c("country",
+                              "HALEbirth_Both sexes_2016", 
+                              "HALEbirth_Both sexes_2015",
+                              "HALEbirth_Both sexes_2010",
+                              "HALEbirth_Both sexes_2005",
+                              "HALEbirth_Both sexes_2000",
+                              "HALEbirth_Male_2016",
+                              "HALEbirth_Male_2015", 
+                              "HALEbirth_Male_2010",
+                              "HALEbirth_Male_2005",
+                              "HALEbirth_Male_2000",
+                              "HALEbirth_Female_2016",
+                              "HALEbirth_Female_2015",
+                              "HALEbirth_Female_2010", 
+                              "HALEbirth_Female_2005",
+                              "HALEbirth_Female_2000",
+                              "HALE60_Both sexes_2016", 
+                              "HALE60_Both sexes_2015",
+                              "HALE60_Both sexes_2010",
+                              "HALE60_Both sexes_2005", 
+                              "HALE60_Both sexes_2000",
+                              "HALE60_Male_2016",
+                              "HALE60_Male_2015", 
+                              "HALE60_Male_2010",
+                              "HALE60_Male_2005",
+                              "HALE60_Male_2000",
+                              "HALE60_Female_2016",
+                              "HALE60_Female_2015",
+                              "HALE60_Female_2010", 
+                              "HALE60_Female_2005",
+                              "HALE60_Female_2000")
+```
+
+### Question 2
+
+```{r question-2, message=FALSE, warning=FALSE}
+WHOLifeExpectancy <- WHOLifeExpectancy %>% 
+                      pivot_longer(c(
+                              "HALEbirth_Both sexes_2016", 
+                              "HALEbirth_Both sexes_2015",
+                              "HALEbirth_Both sexes_2010",
+                              "HALEbirth_Both sexes_2005",
+                              "HALEbirth_Both sexes_2000",
+                              "HALEbirth_Male_2016",
+                              "HALEbirth_Male_2015", 
+                              "HALEbirth_Male_2010",
+                              "HALEbirth_Male_2005",
+                              "HALEbirth_Male_2000",
+                              "HALEbirth_Female_2016",
+                              "HALEbirth_Female_2015",
+                              "HALEbirth_Female_2010", 
+                              "HALEbirth_Female_2005",
+                              "HALEbirth_Female_2000",
+                              "HALE60_Both sexes_2016", 
+                              "HALE60_Both sexes_2015",
+                              "HALE60_Both sexes_2010",
+                              "HALE60_Both sexes_2005", 
+                              "HALE60_Both sexes_2000",
+                              "HALE60_Male_2016",
+                              "HALE60_Male_2015", 
+                              "HALE60_Male_2010",
+                              "HALE60_Male_2005",
+                              "HALE60_Male_2000",
+                              "HALE60_Female_2016",
+                              "HALE60_Female_2015",
+                              "HALE60_Female_2010", 
+                              "HALE60_Female_2005",
+                              "HALE60_Female_2000"),
+                              names_to = 
+                                "names",
+                              values_to = 
+                                "values") %>%
+                          separate(names,
+                                   c("category", 
+                                     "sex",
+                                     "year"),
+                                   sep="_") %>%
+                          pivot_wider(
+                            names_from=category,
+                            values_from=values
+                          ) %>%
+                          arrange(desc(year),
+                                  country)
+head(WHOLifeExpectancy, 10)
+```
+
+### Question 3
+
+```{r question-3, message=FALSE, warning=FALSE}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+WHOLifeExpectancy2 <- WHOLifeExpectancy %>%
+                      filter(sex == "Both sexes",
+                             year == "2016")
+
+WHO_metadata <- read_csv("C:/RLibrary/Quiz 3 Andrew McLain/Andrew McLain Quiz 3/WHO_metadata.csv",
+                         col_names=c("x",
+                                     "ISO",
+                                     "country")) %>%
+                         select("ISO", "country")
+
+WHOLifeExpectancy2_metadata <- WHOLifeExpectancy2 %>%
+                               left_join(
+                                 WHO_metadata,
+                                 c("country"=
+                                   "country"
+                                 )
+                               )
+
+world_WHOLifeExpectancy2_metadata <- world %>%
+                                left_join(
+                                WHOLifeExpectancy2_metadata,
+                                c("iso_a3"=
+                                  "ISO")
+                                )
+
+```
+
+### Question 4
+
+```{r question-4, message=FALSE, warning=FALSE}
+
+plot_world_WHOLifeExpectancy2_metadata <-
+  ggplot(world_WHOLifeExpectancy2_metadata) +
+  geom_sf(aes(fill=HALEbirth)) +
+  my_map_theme() +
+  labs(title = "Healthy Life Expectancy
+                at Birth in 2016") +
+  scale_fill_continuous("Healthy Life\nExpectancy\nat Birth (years)",
+                        low="red", 
+                        high="purple")
+
+plot_world_WHOLifeExpectancy2_metadata
+
+```
+
+### Question 5
+
+```{r question-5, message=FALSE, warning=FALSE}
+world_WHOLifeExpectancy2_metadata <-
+  world_WHOLifeExpectancy2_metadata %>%
+  mutate(text = paste("<b>",country,"</b>\nHealthy Life Expectancy:",HALEbirth)) 
+
+plot2_world_WHOLifeExpectancy2_metadata <-
+  ggplot(world_WHOLifeExpectancy2_metadata) +
+  geom_sf(aes(fill=HALEbirth
+              +runif(nrow(
+                world_WHOLifeExpectancy2_metadata)),
+              text=text
+              )) +
+  my_map_theme() +
+  scale_fill_continuous("Healthy Life\nExpectancy\nat Birth (years)",
+                        low="red", 
+                        high="purple")  
+
+
+ggplotly(plot2_world_WHOLifeExpectancy2_metadata, 
+         tooltip = "text") %>%
+  style(hoveron = "fills") 
+```
